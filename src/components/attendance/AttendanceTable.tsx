@@ -5,9 +5,14 @@ import StudentRow, { Student } from './StudentRow';
 interface AttendanceTableProps {
   students: Student[];
   markAttendance: (studentId: number, isPresent: boolean) => void;
+  onStudentClick: (student: Student) => void;
 }
 
-const AttendanceTable: React.FC<AttendanceTableProps> = ({ students, markAttendance }) => {
+const AttendanceTable: React.FC<AttendanceTableProps> = ({ 
+  students, 
+  markAttendance,
+  onStudentClick
+}) => {
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden">
       <div className="grid grid-cols-4 px-4 py-3 border-b border-gray-100">
@@ -22,6 +27,7 @@ const AttendanceTable: React.FC<AttendanceTableProps> = ({ students, markAttenda
             key={student.id}
             student={student}
             markAttendance={markAttendance}
+            onStudentClick={onStudentClick}
           />
         ))}
       </div>
