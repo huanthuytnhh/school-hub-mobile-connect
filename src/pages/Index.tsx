@@ -5,7 +5,7 @@ import DashboardStats from '@/components/DashboardStats';
 import FeatureCard from '@/components/FeatureCard';
 import BottomNavBar from '@/components/BottomNavBar';
 import { 
-  User, Food, MessageCircle, Calendar, Megaphone, BarChart 
+  User, Utensils, MessageCircle, Calendar, Megaphone, BarChart 
 } from 'lucide-react';
 
 const Index = () => {
@@ -22,7 +22,7 @@ const Index = () => {
   }, [toast]);
   
   const features = [
-    { title: "Food", icon: Food, color: "#4285F4", link: "/food" },
+    { title: "Food", icon: Utensils, color: "#4285F4", link: "/food" },
     { title: "Student", icon: User, color: "#4285F4", link: "/students" },
     { title: "Teacher", icon: User, color: "#4285F4", link: "/teachers" },
     { title: "Daily Check", icon: Calendar, color: "#34A853", link: "/check" },
@@ -60,9 +60,7 @@ const Index = () => {
               icon={feature.icon}
               color={feature.color}
               link={feature.link}
-              className="animate-fade-in"
-              // Stagger the animation
-              style={{ animationDelay: `${index * 0.1}s` }}
+              className={`animate-fade-in delay-${index * 100}`}
             />
           ))}
         </div>

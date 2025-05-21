@@ -23,10 +23,10 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
     <Link to={link} className={cn("animate-fade-in", className)}>
       <div className="flex flex-col items-center p-3 bg-white rounded-xl shadow-sm transition-all duration-200 hover:shadow-md">
         <div 
-          className="feature-icon mb-2" 
+          className="feature-icon mb-2 p-2 rounded-full flex items-center justify-center" 
           style={{ backgroundColor: color }}
         >
-          <Icon strokeWidth={1.5} size={24} />
+          <Icon strokeWidth={1.5} size={24} className="text-white" />
         </div>
         <span className="text-sm font-medium">{title}</span>
       </div>
