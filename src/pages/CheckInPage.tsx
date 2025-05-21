@@ -4,8 +4,14 @@ import { ArrowLeft, Check, X, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
 import BottomNavBar from '@/components/BottomNavBar';
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Calendar } from '@/components/ui/calendar';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 
 interface Student {
@@ -13,7 +19,7 @@ interface Student {
   name: string;
   grade: string;
   rollNumber: string;
-  isPresent: boolean | null;
+  isPresent: boolean;
   avatar: string;
 }
 
@@ -23,12 +29,20 @@ const CheckInPage: React.FC = () => {
   const [selectedClass, setSelectedClass] = useState<string>("5/1");
   const [searchQuery, setSearchQuery] = useState<string>("");
   
-  // Sample students data
+  // Available classes
+  const classes = ["5/1", "5/2", "6/1", "6/2"];
+  
+  // Sample students data - all preset to present (isPresent: true)
   const [students, setStudents] = useState<Student[]>([
-    { id: 1, name: "Luu Duy Quang", grade: "5/1", rollNumber: "1001", isPresent: null, avatar: "https://i.pravatar.cc/150?img=1" },
-    { id: 2, name: "Le Hai Khoa", grade: "5/1", rollNumber: "1002", isPresent: null, avatar: "https://i.pravatar.cc/150?img=2" },
-    { id: 3, name: "Le Ngoc Thanh", grade: "5/1", rollNumber: "1003", isPresent: null, avatar: "https://i.pravatar.cc/150?img=3" },
-    { id: 4, name: "Ngo Nguyen Tan Quan", grade: "5/1", rollNumber: "1101", isPresent: null, avatar: "https://i.pravatar.cc/150?img=4" },
+    { id: 1, name: "Luu Duy Quang", grade: "5/1", rollNumber: "1001", isPresent: true, avatar: "https://i.pravatar.cc/150?img=1" },
+    { id: 2, name: "Le Hai Khoa", grade: "5/1", rollNumber: "1002", isPresent: true, avatar: "https://i.pravatar.cc/150?img=2" },
+    { id: 3, name: "Le Ngoc Thanh", grade: "5/1", rollNumber: "1003", isPresent: true, avatar: "https://i.pravatar.cc/150?img=3" },
+    { id: 4, name: "Ngo Nguyen Tan Quan", grade: "5/1", rollNumber: "1101", isPresent: true, avatar: "https://i.pravatar.cc/150?img=4" },
+    // Add students from other classes
+    { id: 5, name: "Tran Van A", grade: "5/2", rollNumber: "2001", isPresent: true, avatar: "https://i.pravatar.cc/150?img=5" },
+    { id: 6, name: "Nguyen Van B", grade: "5/2", rollNumber: "2002", isPresent: true, avatar: "https://i.pravatar.cc/150?img=6" },
+    { id: 7, name: "Pham Thi C", grade: "6/1", rollNumber: "3001", isPresent: true, avatar: "https://i.pravatar.cc/150?img=7" },
+    { id: 8, name: "Hoang Van D", grade: "6/2", rollNumber: "4001", isPresent: true, avatar: "https://i.pravatar.cc/150?img=8" },
   ]);
 
   const formattedDate = date.toLocaleDateString('en-US', {
@@ -47,26 +61,21 @@ const CheckInPage: React.FC = () => {
     );
   };
 
+  const handleClassChange = (classValue: string) => {
+    setSelectedClass(classValue);
+  };
+
   const submitAttendance = () => {
-    const allMarked = students.every(student => student.isPresent !== null);
-    
-    if (!allMarked) {
-      toast({
-        title: "Incomplete Attendance",
-        description: "Please mark all students as present or absent.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
     toast({
       title: "Attendance Submitted",
       description: `Successfully recorded attendance for ${formattedDate}`,
     });
   };
 
+  // Filter students by search query AND selected class
   const filteredStudents = students.filter(student =>
-    student.name.toLowerCase().includes(searchQuery.toLowerCase())
+    student.name.toLowerCase().includes(searchQuery.toLowerCase()) && 
+    student.grade === selectedClass
   );
 
   return (
@@ -127,11 +136,25 @@ const CheckInPage: React.FC = () => {
           <p className="text-sm text-gray-500">{formattedDate} | {dayName}</p>
         </div>
         
-        <div className="bg-school-secondary/20 rounded-xl shadow-sm p-4 mb-4">
-          <h2 className="text-school-primary font-semibold">
-            Class {selectedClass}
-          </h2>
-        </div>
+        {/* Class Selector - Now functional with dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger className="bg-school-secondary/20 rounded-xl shadow-sm p-4 mb-4 w-full text-left">
+            <h2 className="text-school-primary font-semibold">
+              Class {selectedClass}
+            </h2>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-full max-w-[90vw] bg-white">
+            {classes.map((classItem) => (
+              <DropdownMenuItem 
+                key={classItem}
+                onClick={() => handleClassChange(classItem)}
+                className="cursor-pointer"
+              >
+                Class {classItem}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       
       {/* Attendance List */}
