@@ -22,6 +22,20 @@ const AnnouncementsPage: React.FC = () => {
     useState<Announcement | null>(null);
   const navigate = useNavigate();
 
+  // Group announcements by date
+  const groupByDate = (announcements: Announcement[]) => {
+    const grouped: { [key: string]: Announcement[] } = {};
+    announcements.forEach((announcement) => {
+      if (!grouped[announcement.date]) {
+        grouped[announcement.date] = [];
+      }
+      grouped[announcement.date].push(announcement);
+    });
+    return grouped;
+  };
+
+  const groupedAnnouncements = groupByDate(announcements);
+
   const handleDelete = (announcement: Announcement) => {
     setAnnouncementToDelete(announcement);
     setIsDeleteDialogOpen(true);
@@ -48,7 +62,7 @@ const AnnouncementsPage: React.FC = () => {
           <h1 className="text-xl font-bold">Notifications</h1>
         </div>
         <button
-          onClick={() => navigate("/announcements/new")}
+          onClick={() => navigate("/notifications/new")}
           className="flex items-center gap-2 px-4 py-2 bg-school-primary text-white rounded-full shadow-md hover:bg-school-primary/90"
         >
           <Plus className="h-5 w-5" /> Add Announcement
@@ -57,42 +71,51 @@ const AnnouncementsPage: React.FC = () => {
 
       {/* Announcements List */}
       <div className="px-5 mt-4 space-y-6">
-        {announcements.map((announcement) => (
-          <div
-            key={announcement.id}
-            className="bg-white p-4 rounded-xl shadow-sm flex items-center justify-between"
-          >
-            <div className="flex items-center">
-              <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 mr-4">
-                {announcement.category === "Reminder" && "🔔"}
-                {announcement.category === "Update" && "💬"}
-                {announcement.category === "Transaction" && "💰"}
-              </div>
-              <div>
-                <h3 className="font-bold text-gray-800">
-                  {announcement.title}
-                </h3>
-                <p className="text-sm text-gray-600">{announcement.message}</p>
-                <span className="text-xs text-gray-500">
-                  {announcement.time} - {announcement.date}
-                </span>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() =>
-                  navigate(`/announcements/${announcement.id}/edit`)
-                }
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <Edit className="h-5 w-5" />
-              </button>
-              <button
-                onClick={() => handleDelete(announcement)}
-                className="text-red-500 hover:text-red-700"
-              >
-                <Trash2 className="h-5 w-5" />
-              </button>
+        {Object.keys(groupedAnnouncements).map((date) => (
+          <div key={date}>
+            <h2 className="text-lg font-bold text-gray-700 mb-3">{date}</h2>
+            <div className="space-y-3">
+              {groupedAnnouncements[date].map((announcement) => (
+                <div
+                  key={announcement.id}
+                  className="bg-white p-4 rounded-xl shadow-sm flex items-center justify-between"
+                >
+                  <div className="flex items-center">
+                    <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 mr-4">
+                      {announcement.category === "Reminder" && "🔔"}
+                      {announcement.category === "Update" && "💬"}
+                      {announcement.category === "Transaction" && "💰"}
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-gray-800">
+                        {announcement.title}
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        {announcement.message}
+                      </p>
+                      <span className="text-xs text-gray-500">
+                        {announcement.time} - {announcement.date}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() =>
+                        navigate(`/notifications/${announcement.id}/edit`)
+                      }
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      <Edit className="h-5 w-5" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(announcement)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <Trash2 className="h-5 w-5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         ))}
