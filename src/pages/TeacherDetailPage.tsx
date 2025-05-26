@@ -12,7 +12,7 @@ import { Link, useParams, useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import BottomNavBar from "@/components/BottomNavBar";
-import { Teacher } from "@/models/teacher"; // Import Teacher model
+import { Teacher } from "@/models/teacher";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,15 +24,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
-import axios from "axios";
-// Import Teacher API functions
+import axiosInstance from "@/api/axiosInstance";
 import { getTeacherById, updateTeacher, deleteTeacher } from "@/api/teacherApi";
-// import axiosInstance from "@/api/axiosInstance"; // Không cần thiết ở đây nếu đã import axios
 
 const TeacherDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [teacher, setTeacher] = useState<Teacher | null>(null); // Đổi từ student sang teacher
+  const [teacher, setTeacher] = useState<Teacher | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -42,13 +40,12 @@ const TeacherDetailPage: React.FC = () => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    phone: "", // Đổi từ phoneNumber sang phone
+    phone: "",
     dateOfBirth: "",
     password: "",
-    classInCharge: "", // Đổi từ grade sang classInCharge
-    // rollNumber không tồn tại trong Teacher, loại bỏ nó
+    classInCharge: "",
     avatar: "",
-    gender: "" as "male" | "female" | "", // Đảm bảo kiểu dữ liệu đúng
+    gender: "" as "male" | "female" | "",
   });
 
   // Fetch teacher data from backend API
@@ -56,16 +53,16 @@ const TeacherDetailPage: React.FC = () => {
     if (id) {
       const teacherId = parseInt(id, 10);
       setIsLoading(true);
-      getTeacherById(teacherId) // Gọi API getTeacherById
+      getTeacherById(teacherId)
         .then((data) => {
           setTeacher(data);
           setFormData({
             name: data.name || "",
             email: data.email || "",
-            phone: data.phone || "", // Cập nhật phone
+            phone: data.phone || "",
             dateOfBirth: data.dateOfBirth || "",
             password: data.password || "",
-            classInCharge: data.classInCharge || "", // Cập nhật classInCharge
+            classInCharge: data.classInCharge || "",
             avatar: data.avatar || "",
             gender: data.gender || "",
           });
@@ -73,14 +70,14 @@ const TeacherDetailPage: React.FC = () => {
         })
         .catch((error) => {
           console.error("Failed to fetch teacher:", error);
-          setTeacher(null); // Đặt teacher thành null nếu có lỗi
+          setTeacher(null);
         })
         .finally(() => setIsLoading(false));
     }
   }, [id]);
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement> // Thêm HTMLSelectElement cho dropdown
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -90,7 +87,7 @@ const TeacherDetailPage: React.FC = () => {
   };
 
   const handleSave = async () => {
-    if (!teacher) return; // Kiểm tra teacher thay vì student
+    if (!teacher) return;
 
     if (formData.password !== confirmPassword) {
       alert("Passwords do not match");
@@ -107,11 +104,11 @@ const TeacherDetailPage: React.FC = () => {
     }
 
     try {
-      await updateTeacher(teacher.id, payload); // Gọi API updateTeacher
+      await updateTeacher(teacher.id, payload);
       alert("Teacher information updated successfully");
-      navigate("/teachers"); // Điều hướng về trang danh sách giáo viên
+      navigate("/teachers");
     } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
+      if (axiosInstance.isAxiosError && axiosInstance.isAxiosError(error)) {
         console.error(error.response?.data);
         alert(
           "Failed to update teacher:\n" +
@@ -129,11 +126,11 @@ const TeacherDetailPage: React.FC = () => {
   };
 
   const confirmDelete = async () => {
-    if (!teacher) return; // Kiểm tra teacher thay vì student
+    if (!teacher) return;
     try {
-      await deleteTeacher(teacher.id); // Gọi API deleteTeacher
+      await deleteTeacher(teacher.id);
       alert("Teacher deleted successfully");
-      navigate("/teachers"); // Điều hướng về trang danh sách giáo viên
+      navigate("/teachers");
     } catch (error) {
       alert("Failed to delete teacher. Please try again.");
       console.error(error);
@@ -141,7 +138,6 @@ const TeacherDetailPage: React.FC = () => {
   };
 
   const handleAvatarChange = () => {
-    // Sử dụng ảnh ngẫu nhiên từ pravatar hoặc một dịch vụ khác cho giáo viên
     const randomId = Math.floor(Math.random() * 70) + 1;
     setFormData((prev) => ({
       ...prev,
@@ -150,11 +146,11 @@ const TeacherDetailPage: React.FC = () => {
   };
 
   if (isLoading) {
-    return <div className="p-5">Loading teacher information...</div>; // Sửa text
+    return <div className="p-5">Loading teacher information...</div>;
   }
 
   if (!teacher) {
-    return <div className="p-5">Teacher not found</div>; // Sửa text
+    return <div className="p-5">Teacher not found</div>;
   }
 
   return (
@@ -163,11 +159,9 @@ const TeacherDetailPage: React.FC = () => {
       <div className="bg-school-primary text-white p-5">
         <div className="flex items-center">
           <Link to="/teachers" className="mr-4">
-            {" "}
-            {/* Sửa link */}
             <ArrowLeft className="h-6 w-6" />
           </Link>
-          <h1 className="text-xl font-bold">Teacher </h1> {/* Sửa tiêu đề */}
+          <h1 className="text-xl font-bold">Teacher</h1>
         </div>
       </div>
 
@@ -221,8 +215,7 @@ const TeacherDetailPage: React.FC = () => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone">Mobile Number</Label>{" "}
-            {/* Sửa Label và name */}
+            <Label htmlFor="phone">Mobile Number</Label>
             <Input
               id="phone"
               name="phone"
@@ -245,8 +238,7 @@ const TeacherDetailPage: React.FC = () => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="classInCharge">Class In Charge</Label>{" "}
-            {/* Sửa Label và name */}
+            <Label htmlFor="classInCharge">Class In Charge</Label>
             <Input
               id="classInCharge"
               name="classInCharge"
@@ -256,31 +248,18 @@ const TeacherDetailPage: React.FC = () => {
             />
           </div>
 
-          {/* rollNumber không có trong Teacher, loại bỏ */}
-          {/* <div className="space-y-2">
-            <Label htmlFor="rollNumber">ID Number</Label>
-            <Input
-              id="rollNumber"
-              name="rollNumber"
-              value={formData.rollNumber}
-              onChange={handleInputChange}
-              className="border-gray-300"
-            />
-          </div> */}
-
           <div className="space-y-2">
             <Label htmlFor="gender">Gender</Label>
             <select
               id="gender"
               name="gender"
               value={formData.gender}
-              onChange={handleInputChange} // Đảm bảo handleInputChange chấp nhận HTMLSelectElement
+              onChange={handleInputChange}
               className="border-gray-300 w-full p-2 rounded"
             >
               <option value="">Select gender</option>
               <option value="male">Male</option>
               <option value="female">Female</option>
-              {/* Thêm các giá trị gender khác nếu cần */}
             </select>
           </div>
 
@@ -357,8 +336,7 @@ const TeacherDetailPage: React.FC = () => {
             <AlertDialogDescription>
               This will permanently delete this teacher and remove their data
               from the system.
-            </AlertDialogDescription>{" "}
-            {/* Sửa text */}
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
