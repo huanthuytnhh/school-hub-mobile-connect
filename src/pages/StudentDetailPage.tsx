@@ -78,7 +78,7 @@ const StudentDetailPage: React.FC = () => {
     }
   }, [id]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -94,33 +94,39 @@ const StudentDetailPage: React.FC = () => {
       return;
     }
 
-    // Tạo bản sao để chỉnh sửa trước khi gửi
-    const payload = {
-      ...formData,
+    // Create payload with proper typing
+    const payload: Partial<Student> = {
+      name: formData.name,
+      email: formData.email,
+      phoneNumber: formData.phoneNumber,
+      dateOfBirth: formData.dateOfBirth,
+      grade: formData.grade,
+      rollNumber: formData.rollNumber,
+      avatar: formData.avatar,
     };
 
-    // Nếu password rỗng, xóa trường password để backend không bắt lỗi
-    if (!payload.password) {
-      delete payload.password;
+    // Only add gender if it's a valid value
+    if (formData.gender && (formData.gender === "male" || formData.gender === "female" || formData.gender === "other")) {
+      payload.gender = formData.gender as "male" | "female" | "other";
     }
 
-    // Đảm bảo dateOfBirth đúng định dạng yyyy-mm-dd
-    // Nếu formData.dateOfBirth là dạng khác, cần convert
-    // Ví dụ, bạn đang nhập date input thì thường đúng format rồi
+    // Only add password if it's not empty
+    if (formData.password) {
+      payload.password = formData.password;
+    }
 
     try {
       await updateStudent(student.id, payload);
       alert("Student information updated successfully");
       navigate("/students");
-    } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
-        console.error(error.response?.data);
+    } catch (error: any) {
+      console.error(error);
+      if (error.response?.data) {
         alert(
           "Failed to update student:\n" +
-            JSON.stringify(error.response?.data, null, 2)
+            JSON.stringify(error.response.data, null, 2)
         );
       } else {
-        console.error(error);
         alert("An unexpected error occurred");
       }
     }

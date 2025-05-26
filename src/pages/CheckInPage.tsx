@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   ArrowLeft,
@@ -166,7 +167,7 @@ const CheckInPage: React.FC = () => {
             );
             return {
               ...student,
-              isPresent: record ? record.is_present : false, // Use record.is_present, default to false
+              isPresent: record ? record.isPresent : false, // Use record.isPresent, default to false
               notes: record ? record.notes || "" : "",
             };
           }
@@ -322,7 +323,7 @@ const CheckInPage: React.FC = () => {
   const transformedAttendanceHistory = useMemo(() => {
     return studentHistoryData.map((record) => ({
       date: new Date(record.date + "T00:00:00"),
-      isPresent: record.is_present,
+      isPresent: record.isPresent,
     }));
   }, [studentHistoryData]);
 

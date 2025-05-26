@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import {
   ArrowLeft,
@@ -95,7 +96,7 @@ const AnnouncementsPage: React.FC = () => {
       toast({
         title: "Announcement Created",
         description: "Dummy announcement saved successfully.",
-        variant: "success",
+        variant: "default",
       });
     } catch (err) {
       console.error("Failed to create dummy announcement via API:", err);
