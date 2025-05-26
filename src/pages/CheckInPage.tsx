@@ -10,7 +10,7 @@ import {
   Edit2,
   MoreVertical, // Thêm icon này
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom"; // Import useLocation
 import { Student } from "@/models/student";
 import { getStudents } from "@/api/studentApi";
 import {
@@ -55,6 +55,7 @@ interface StudentWithAttendance extends Student {
 }
 
 const CheckInPage: React.FC = () => {
+  const location = useLocation(); // Get the current location
   const [allStudents, setAllStudents] = useState<Student[]>([]);
   const [studentsToDisplay, setStudentsToDisplay] = useState<
     StudentWithAttendance[]
@@ -78,6 +79,24 @@ const CheckInPage: React.FC = () => {
     useState<StudentWithAttendance | null>(null);
   const [currentNotes, setCurrentNotes] = useState<string>("");
 
+  useEffect(() => {
+    // Check for grade query parameter in the URL
+    const params = new URLSearchParams(location.search);
+    const gradeParam = params.get("class");
+    if (gradeParam) {
+      setSelectedGrade(gradeParam); // Set selectedGrade to the grade from the URL
+    }
+  }, [location.search]);
+
+  // Restrict grade options if gradeParam exists
+  const selectedGradeFromURL = new URLSearchParams(location.search).get(
+    "class"
+  );
+  console.log("Selected Grade from URL:", selectedGradeFromURL);
+  const grades = selectedGradeFromURL
+    ? [selectedGradeFromURL]
+    : availableGrades;
+
   const fetchInitialData = useCallback(async () => {
     setPageError(null);
     try {
@@ -90,7 +109,13 @@ const CheckInPage: React.FC = () => {
       ).sort();
       setAvailableGrades(uniqueGradesList);
 
-      if (uniqueGradesList.length > 0 && !selectedGrade) {
+      // If no grade is selected from URL, and we have grades, pick the first one
+      // If a grade IS selected from URL, selectedGrade is already set by the effect above
+      if (
+        uniqueGradesList.length > 0 &&
+        !selectedGradeFromURL &&
+        !selectedGrade
+      ) {
         setSelectedGrade(uniqueGradesList[0]);
       } else if (uniqueGradesList.length === 0) {
         setPageError(
@@ -107,7 +132,7 @@ const CheckInPage: React.FC = () => {
     } finally {
       setLoading(false); // Ensure loading is false even on error
     }
-  }, [selectedGrade]); // Thêm selectedGrade vào dependencies để re-run khi grade thay đổi lần đầu
+  }, [selectedGrade, selectedGradeFromURL]); // Thêm selectedGradeFromURL vào dependencies
 
   useEffect(() => {
     fetchInitialData();
@@ -115,17 +140,22 @@ const CheckInPage: React.FC = () => {
 
   useEffect(() => {
     const processStudentAndAttendanceData = async () => {
+      // If selectedGrade is forced by URL and it's not among available grades, there's an issue.
+      // Or if no selectedGrade at all and no students.
       if (!selectedGrade || allStudents.length === 0) {
         setStudentsToDisplay([]);
-        // This condition is for initial load if selectedGrade is not set yet but students are loaded.
-        // It's already handled by fetchInitialData potentially setting selectedGrade.
-        // If allStudents is empty and selectedGrade is null, it means no students loaded.
         if (
           allStudents.length > 0 &&
-          !selectedGrade &&
+          !selectedGrade && // This case is for initial load when selectedGrade hasn't been set yet (no URL param)
           availableGrades.length > 0
         ) {
           setSelectedGrade(availableGrades[0]);
+        } else if (
+          selectedGradeFromURL &&
+          !availableGrades.includes(selectedGradeFromURL) &&
+          !loading
+        ) {
+          setPageError(`Grade "${selectedGradeFromURL}" not found.`);
         }
         setLoading(false);
         return;
@@ -200,7 +230,8 @@ const CheckInPage: React.FC = () => {
     availableGrades,
     loading,
     pageError,
-  ]); // Thêm loading và pageError vào dependencies
+    selectedGradeFromURL, // Thêm vào dependencies
+  ]);
 
   const handleMarkAttendance = async (
     studentId: number,
@@ -387,22 +418,27 @@ const CheckInPage: React.FC = () => {
                 <Button
                   variant="outline"
                   className="w-full sm:w-auto justify-between text-gray-700 border-gray-300 hover:border-school-primary"
+                  disabled={!!selectedGradeFromURL} // THAY ĐỔI Ở ĐÂY
                 >
                   {selectedGrade || "Select Grade"}{" "}
                   <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-full sm:w-[200px] max-h-60 overflow-y-auto">
-                {availableGrades.length > 0 ? (
-                  availableGrades.map((grade) => (
-                    <DropdownMenuItem
-                      key={grade}
-                      onSelect={() => setSelectedGrade(grade)}
-                      className="cursor-pointer"
-                    >
-                      {grade}
-                    </DropdownMenuItem>
-                  ))
+                {grades.length > 0 ? ( // THAY ĐỔI Ở ĐÂY: Dùng biến 'grades'
+                  grades.map(
+                    (
+                      grade // THAY ĐỔI Ở ĐÂY: Dùng biến 'grades'
+                    ) => (
+                      <DropdownMenuItem
+                        key={grade}
+                        onSelect={() => setSelectedGrade(grade)}
+                        className="cursor-pointer"
+                      >
+                        {grade}
+                      </DropdownMenuItem>
+                    )
+                  )
                 ) : (
                   <DropdownMenuItem disabled>
                     No grades available
@@ -665,7 +701,7 @@ const CheckInPage: React.FC = () => {
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem
                         onSelect={() => openNotesDialog(student)}
-                        className="cursor-pointer flex items-center gap-2 text-blue-700"
+                        className="cursor-pointer flex items-center gap-2  text-blue-700"
                       >
                         <Edit2 size={16} /> Edit Note
                       </DropdownMenuItem>

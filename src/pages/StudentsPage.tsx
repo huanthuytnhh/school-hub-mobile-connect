@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { ArrowLeft, Search, User } from "lucide-react";
 import { FaMale, FaFemale } from "react-icons/fa";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import BottomNavBar from "@/components/BottomNavBar";
 import { Student } from "@/models/student";
@@ -25,11 +25,12 @@ import {
 import { getStudents, createStudent, deleteStudent } from "@/api/studentApi";
 
 const StudentsPage: React.FC = () => {
+  const location = useLocation(); // Get the current location
   const [searchQuery, setSearchQuery] = useState("");
   const [students, setStudents] = useState<Student[]>([]);
-  const [selectedClass, setSelectedClass] = useState("ALL"); // Đặt mặc định là "ALL"
+  const [selectedClass, setSelectedClass] = useState("ALL"); // Default to "ALL"
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null); // Thêm state error
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   // State cho hộp thoại xác nhận xóa
@@ -37,6 +38,15 @@ const StudentsPage: React.FC = () => {
   const [studentToDeleteId, setStudentToDeleteId] = useState<number | null>(
     null
   );
+
+  useEffect(() => {
+    // Check for class query parameter in the URL
+    const params = new URLSearchParams(location.search);
+    const classParam = params.get("class");
+    if (classParam) {
+      setSelectedClass(classParam); // Set selectedClass to the class from the URL
+    }
+  }, [location.search]);
 
   // Lấy danh sách students từ API khi component mount
   useEffect(() => {
@@ -66,7 +76,8 @@ const StudentsPage: React.FC = () => {
   const uniqueClasses = Array.from(
     new Set(students.map((student) => student.grade))
   ).sort();
-  const classes = ["ALL", ...uniqueClasses];
+  const classes =
+    selectedClass !== "ALL" ? [selectedClass] : ["ALL", ...uniqueClasses];
 
   // Tên giáo viên theo lớp (ví dụ demo)
   const getTeacherName = (classValue: string) => {

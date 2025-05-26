@@ -1,3 +1,13 @@
+// GET user role (for teacher)
+export const getUserRole = async (email?: string): Promise<string> => {
+  const url = email
+    ? `/user-role/?email=${encodeURIComponent(email)}`
+    : "/user-role/";
+
+  const response = await axiosInstance.get(url);
+  console.log("Role response:", response.data);
+  return response.data || "undefined";
+};
 // src/api/teacherApi.ts
 import axiosInstance from "@/api/axiosInstance";
 import { Teacher } from "@/models/teacher"; // Vẫn import từ model Teacher đã được cập nhật

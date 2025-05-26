@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -32,8 +31,38 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/sign-in/*" element={<SignIn fallbackRedirectUrl="/" />} />
-          <Route path="/sign-up/*" element={<SignUp fallbackRedirectUrl="/" />} />
+          <Route
+            path="/sign-in/*"
+            element={
+              <div
+                style={{
+                  minHeight: "100vh",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: "#f5f6fa",
+                }}
+              >
+                <SignIn fallbackRedirectUrl="/" />
+              </div>
+            }
+          />
+          <Route
+            path="/sign-up/*"
+            element={
+              <div
+                style={{
+                  minHeight: "100vh",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: "#f5f6fa",
+                }}
+              >
+                <SignUp fallbackRedirectUrl="/" />
+              </div>
+            }
+          />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/students" element={<StudentsPage />} />
           <Route path="/students/:id" element={<StudentDetailPage />} />
