@@ -1,8 +1,7 @@
-
-import React from 'react';
-import { useLocation, Link } from 'react-router-dom';
-import { Home, MessageCircle, Bell, User } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import React from "react";
+import { useLocation, Link } from "react-router-dom";
+import { Home, MessageCircle, Bell, User } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface NavItemProps {
   to: string;
@@ -13,12 +12,12 @@ interface NavItemProps {
 
 const NavItem: React.FC<NavItemProps> = ({ to, icon, label, isActive }) => {
   return (
-    <Link 
+    <Link
       to={to}
       className={cn(
-        "bottom-nav-item", 
-        isActive 
-          ? "text-school-primary bg-green-100" 
+        "bottom-nav-item",
+        isActive
+          ? "text-school-primary bg-green-100"
           : "text-gray-500 hover:bg-gray-100"
       )}
     >
@@ -31,33 +30,33 @@ const NavItem: React.FC<NavItemProps> = ({ to, icon, label, isActive }) => {
 const BottomNavBar: React.FC = () => {
   const location = useLocation();
   const currentPath = location.pathname;
-  
+
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white shadow-lg border-t border-gray-200 py-1">
       <div className="grid grid-cols-4 h-16">
-        <NavItem 
+        <NavItem
           to="/"
           icon={<Home strokeWidth={1.5} size={20} />}
           label="Home"
-          isActive={currentPath === '/'}
-        />
-        <NavItem 
-          to="/announcements"
+          isActive={currentPath === "/"}
+        />{" "}
+        <NavItem
+          to="/chat"
           icon={<MessageCircle strokeWidth={1.5} size={20} />}
           label="Messages"
-          isActive={currentPath === '/announcements'}
+          isActive={currentPath.startsWith("/chat")}
         />
-        <NavItem 
-          to="/notifications"
+        <NavItem
+          to="/announcements"
           icon={<Bell strokeWidth={1.5} size={20} />}
           label="Alerts"
-          isActive={currentPath === '/notifications'}
+          isActive={currentPath.startsWith("/announcements")}
         />
-        <NavItem 
+        <NavItem
           to="/profile"
           icon={<User strokeWidth={1.5} size={20} />}
           label="Profile"
-          isActive={currentPath === '/profile'}
+          isActive={currentPath === "/profile"}
         />
       </div>
     </div>
