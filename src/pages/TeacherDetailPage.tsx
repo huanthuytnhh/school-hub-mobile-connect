@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import {
   ArrowLeft,
@@ -94,28 +95,38 @@ const TeacherDetailPage: React.FC = () => {
       return;
     }
 
-    const payload = {
-      ...formData,
+    // Only include gender in payload if it's not empty
+    const payload: Partial<Teacher> = {
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone,
+      dateOfBirth: formData.dateOfBirth,
+      classInCharge: formData.classInCharge,
+      avatar: formData.avatar,
     };
 
-    // Nếu password rỗng, xóa trường password để backend không bắt lỗi
-    if (!payload.password) {
-      delete payload.password;
+    // Only add gender if it's a valid value
+    if (formData.gender && (formData.gender === "male" || formData.gender === "female")) {
+      payload.gender = formData.gender;
+    }
+
+    // Only add password if it's not empty
+    if (formData.password) {
+      payload.password = formData.password;
     }
 
     try {
       await updateTeacher(teacher.id, payload);
       alert("Teacher information updated successfully");
       navigate("/teachers");
-    } catch (error: unknown) {
-      if (axiosInstance.isAxiosError && axiosInstance.isAxiosError(error)) {
-        console.error(error.response?.data);
+    } catch (error: any) {
+      console.error(error);
+      if (error.response?.data) {
         alert(
           "Failed to update teacher:\n" +
-            JSON.stringify(error.response?.data, null, 2)
+            JSON.stringify(error.response.data, null, 2)
         );
       } else {
-        console.error(error);
         alert("An unexpected error occurred");
       }
     }
