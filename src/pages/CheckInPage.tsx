@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   ArrowLeft,
@@ -251,7 +250,7 @@ const CheckInPage: React.FC = () => {
           student.id === studentId
             ? {
                 ...student,
-                isPresent: updatedRecord.is_present,
+                isPresent: updatedRecord.isPresent,
                 notes: updatedRecord.notes || "",
               }
             : student
