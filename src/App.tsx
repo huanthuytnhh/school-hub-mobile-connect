@@ -1,8 +1,10 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { SignIn, SignUp } from "@clerk/clerk-react";
 import Index from "./pages/Index";
 import StudentsPage from "./pages/StudentsPage";
 import StudentDetailPage from "./pages/StudentDetailPage";
@@ -14,6 +16,7 @@ import AnnouncementsPage from "./pages/AnnouncementsPage";
 import AnnouncementsDetailPage from "./pages/AnnouncementsDetailPage";
 import AddAnnouncementPage from "./pages/AddAnnouncementPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
+import ProfilePage from "./pages/ProfilePage";
 import NotFound from "./pages/NotFound";
 import ChatOverviewPage from "./pages/ChatOverviewPage";
 import SelectChatRecipientPage from "./pages/SelectChatRecipientPage";
@@ -28,8 +31,10 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          {" "}
           <Route path="/" element={<Index />} />
+          <Route path="/sign-in/*" element={<SignIn fallbackRedirectUrl="/" />} />
+          <Route path="/sign-up/*" element={<SignUp fallbackRedirectUrl="/" />} />
+          <Route path="/profile" element={<ProfilePage />} />
           <Route path="/students" element={<StudentsPage />} />
           <Route path="/students/:id" element={<StudentDetailPage />} />
           <Route path="/teachers" element={<TeachersPage />} />
@@ -37,7 +42,6 @@ const App = () => (
           <Route path="/food" element={<FoodPage />} />
           <Route path="/check" element={<CheckInPage />} />
           <Route path="/announcements" element={<AnnouncementsPage />} />
-          {/* Dùng chung một route cho cả thêm mới và chỉnh sửa */}
           <Route
             path="/announcements/:id/edit"
             element={<AnnouncementsDetailPage />}
@@ -45,18 +49,7 @@ const App = () => (
           <Route
             path="/announcements/new"
             element={<AnnouncementsDetailPage />}
-          />{" "}
-          {/* Thêm route này để khớp với id='new' */}
-          {/* Thêm route này để khớp với id='new' */}
-          {/* <Route path="/announcements/new" element={<AddAnnouncementPage />} /> */}
-          {/* <Route
-            path="/announcements/:id"
-            element={<AnnouncementsDetailPage />}
-          /> */}
-          {/* <Route
-            path="/announcements/:id/edit"
-            element={<AnnouncementsDetailPage />}
-          /> */}
+          />
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/chat" element={<ChatOverviewPage />} />
           <Route path="/chat/new" element={<SelectChatRecipientPage />} />

@@ -1,6 +1,8 @@
+
 import React from "react";
 import { useLocation, Link } from "react-router-dom";
 import { Home, MessageCircle, Bell, User } from "lucide-react";
+import { useUser } from "@clerk/clerk-react";
 import { cn } from "@/lib/utils";
 
 interface NavItemProps {
@@ -29,7 +31,13 @@ const NavItem: React.FC<NavItemProps> = ({ to, icon, label, isActive }) => {
 
 const BottomNavBar: React.FC = () => {
   const location = useLocation();
+  const { isSignedIn } = useUser();
   const currentPath = location.pathname;
+
+  // Don't show bottom nav on sign-in/sign-up pages
+  if (currentPath.includes('/sign-in') || currentPath.includes('/sign-up')) {
+    return null;
+  }
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white shadow-lg border-t border-gray-200 py-1">
@@ -39,7 +47,7 @@ const BottomNavBar: React.FC = () => {
           icon={<Home strokeWidth={1.5} size={20} />}
           label="Home"
           isActive={currentPath === "/"}
-        />{" "}
+        />
         <NavItem
           to="/chat"
           icon={<MessageCircle strokeWidth={1.5} size={20} />}
@@ -53,9 +61,9 @@ const BottomNavBar: React.FC = () => {
           isActive={currentPath.startsWith("/announcements")}
         />
         <NavItem
-          to="/profile"
+          to={isSignedIn ? "/profile" : "/sign-in"}
           icon={<User strokeWidth={1.5} size={20} />}
-          label="Profile"
+          label={isSignedIn ? "Profile" : "Sign In"}
           isActive={currentPath === "/profile"}
         />
       </div>
