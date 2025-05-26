@@ -8,6 +8,7 @@ import {
   ChevronDown,
   Info,
   Edit2,
+  MoreVertical, // Thêm icon này
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Student } from "@/models/student";
@@ -38,83 +39,20 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 
-// Kiểu dữ liệu cho Student trong state của trang này, bao gồm isPresent và notes
+import StudentAttendanceHistory from "@/components/attendance/StudentAttendanceHistory";
+
+// Helper function to format date to YYYY-MM-DD string using local date components
+const getFormattedDateForAPI = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Months are 0-indexed, so add 1
+  const day = date.getDate().toString().padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 interface StudentWithAttendance extends Student {
-  isPresent: boolean; // Now a required boolean (true/false only)
+  isPresent: boolean;
   notes?: string;
 }
-
-interface StudentAttendanceHistoryProps {
-  open: boolean;
-  onClose: () => void;
-  student: StudentWithAttendance | null;
-  attendanceHistory: AttendanceRecord[];
-  isLoading: boolean;
-}
-
-const StudentAttendanceHistoryDialog: React.FC<
-  StudentAttendanceHistoryProps
-> = ({ open, onClose, student, attendanceHistory, isLoading }) => {
-  if (!open || !student) return null;
-
-  return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px] md:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Attendance History: {student.name}</DialogTitle>
-          <DialogDescription>
-            Showing attendance records for the current view.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="max-h-[60vh] overflow-y-auto py-4">
-          {isLoading ? (
-            <p className="text-center text-gray-500">Loading history...</p>
-          ) : attendanceHistory.length > 0 ? (
-            <ul className="space-y-2">
-              {attendanceHistory.map((record) => (
-                <li
-                  key={`${record.date}-${record.studentId}`}
-                  className="py-2 px-3 border rounded-md bg-gray-50"
-                >
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">
-                      {new Date(record.date + "T00:00:00").toLocaleDateString()}
-                    </span>{" "}
-                    <span
-                      className={`px-2 py-0.5 text-xs rounded-full font-semibold ${
-                        record.isPresent // This 'isPresent' is from AttendanceRecord, which should also be boolean
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
-                      }`}
-                    >
-                      {record.isPresent ? "Present" : "Absent"}
-                    </span>
-                  </div>
-                  {record.notes && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      Note: {record.notes}
-                    </p>
-                  )}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-center text-gray-500 py-4">
-              No attendance history found for this period.
-            </p>
-          )}
-        </div>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button type="button" variant="outline">
-              Close
-            </Button>
-          </DialogClose>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-};
 
 const CheckInPage: React.FC = () => {
   const [allStudents, setAllStudents] = useState<Student[]>([]);
@@ -127,9 +65,9 @@ const CheckInPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState<string | null>(null);
 
+  const [isHistoryDrawerOpen, setIsHistoryDrawerOpen] = useState(false);
   const [selectedStudentForHistory, setSelectedStudentForHistory] =
     useState<StudentWithAttendance | null>(null);
-  const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
   const [studentHistoryData, setStudentHistoryData] = useState<
     AttendanceRecord[]
   >([]);
@@ -166,24 +104,22 @@ const CheckInPage: React.FC = () => {
       );
       setAllStudents([]);
       setAvailableGrades([]);
-      setLoading(false);
+    } finally {
+      setLoading(false); // Ensure loading is false even on error
     }
-  }, []);
+  }, [selectedGrade]); // Thêm selectedGrade vào dependencies để re-run khi grade thay đổi lần đầu
 
   useEffect(() => {
     fetchInitialData();
   }, [fetchInitialData]);
-  // Helper function to format date to YYYY-MM-DD string using local date components
-  const getFormattedDateForAPI = (date: Date): string => {
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Months are 0-indexed, so add 1
-    const day = date.getDate().toString().padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  };
+
   useEffect(() => {
     const processStudentAndAttendanceData = async () => {
       if (!selectedGrade || allStudents.length === 0) {
         setStudentsToDisplay([]);
+        // This condition is for initial load if selectedGrade is not set yet but students are loaded.
+        // It's already handled by fetchInitialData potentially setting selectedGrade.
+        // If allStudents is empty and selectedGrade is null, it means no students loaded.
         if (
           allStudents.length > 0 &&
           !selectedGrade &&
@@ -210,8 +146,7 @@ const CheckInPage: React.FC = () => {
         }));
 
       try {
-        // const formattedDate = currentDate.toISOString().split("T")[0];
-        const formattedDate = getFormattedDateForAPI(currentDate); // CHANGED
+        const formattedDate = getFormattedDateForAPI(currentDate);
         console.log(
           `Fetching attendance for classId: ${selectedGrade}, date: ${formattedDate}`
         );
@@ -250,12 +185,22 @@ const CheckInPage: React.FC = () => {
       }
     };
 
-    if (allStudents.length > 0) {
+    // Only run if allStudents is populated or if loading finished with an error indicating no students.
+    // Avoid running if allStudents is empty but fetchInitialData is still running.
+    if (
+      allStudents.length > 0 ||
+      (!loading && pageError && allStudents.length === 0)
+    ) {
       processStudentAndAttendanceData();
-    } else if (!loading && pageError) {
-      setLoading(false);
     }
-  }, [selectedGrade, currentDate, allStudents, availableGrades]);
+  }, [
+    selectedGrade,
+    currentDate,
+    allStudents,
+    availableGrades,
+    loading,
+    pageError,
+  ]); // Thêm loading và pageError vào dependencies
 
   const handleMarkAttendance = async (
     studentId: number,
@@ -275,7 +220,7 @@ const CheckInPage: React.FC = () => {
     const payload: MarkAttendancePayload = {
       studentId,
       classId: selectedGrade,
-      date: currentDate.toISOString().split("T")[0],
+      date: getFormattedDateForAPI(currentDate),
       isPresent: isPresentStatus,
       notes: notesToSave !== undefined ? notesToSave : studentBeingMarked.notes,
     };
@@ -297,7 +242,7 @@ const CheckInPage: React.FC = () => {
         `API Response - markStudentAttendance (Payload: ${JSON.stringify(
           payload
         )}):`,
-        updatedRecord // Log the actual response from the API
+        updatedRecord
       );
       // Ensure UI is updated with the actual response from the backend
       setStudentsToDisplay((prevStudents) =>
@@ -305,8 +250,7 @@ const CheckInPage: React.FC = () => {
           student.id === studentId
             ? {
                 ...student,
-                // CORRECTED: Use 'is_present' from the API response if that's what it sends
-                isPresent: updatedRecord.is_present, // <--- CHANGED THIS LINE
+                isPresent: updatedRecord.is_present,
                 notes: updatedRecord.notes || "",
               }
             : student
@@ -325,7 +269,7 @@ const CheckInPage: React.FC = () => {
 
   const handleViewHistory = async (student: StudentWithAttendance) => {
     setSelectedStudentForHistory(student);
-    setIsHistoryDialogOpen(true);
+    setIsHistoryDrawerOpen(true);
     setLoadingHistory(true);
     try {
       const month = currentDate.getMonth() + 1;
@@ -339,7 +283,7 @@ const CheckInPage: React.FC = () => {
         `API Response - getStudentAttendanceHistory (Student ID: ${student.id}, Month: ${month}, Year: ${year}):`,
         history
       );
-      setStudentHistoryData(history);
+      setStudentHistoryData(history); // Raw history data from API
     } catch (err) {
       console.error("Failed to fetch student attendance history:", err);
       setPageError(
@@ -360,7 +304,6 @@ const CheckInPage: React.FC = () => {
   const handleSaveNotes = () => {
     if (!studentForNotes) return;
 
-    // isPresent is now guaranteed to be boolean from studentForNotes.isPresent
     const currentIsPresent = studentForNotes.isPresent;
 
     handleMarkAttendance(studentForNotes.id, currentIsPresent, currentNotes);
@@ -375,6 +318,13 @@ const CheckInPage: React.FC = () => {
       .split("T")[0];
     return localISOTime;
   }, [currentDate]);
+
+  const transformedAttendanceHistory = useMemo(() => {
+    return studentHistoryData.map((record) => ({
+      date: new Date(record.date + "T00:00:00"),
+      isPresent: record.is_present,
+    }));
+  }, [studentHistoryData]);
 
   if (loading && allStudents.length === 0) {
     return (
@@ -491,7 +441,8 @@ const CheckInPage: React.FC = () => {
         )}
       </div>
 
-      <div className="flex-grow p-4 overflow-x-auto">
+      {/* HIỂN THỊ DẠNG BẢNG (CHO MÀN HÌNH LỚN HƠN HOẶC BẰNG 'sm') */}
+      <div className="flex-grow p-4 overflow-x-auto hidden sm:block">
         {loading && allStudents.length > 0 && (
           <p className="text-center text-gray-600 py-8">
             Loading attendance for {selectedGrade}...
@@ -562,64 +513,173 @@ const CheckInPage: React.FC = () => {
                         </span>
                       )}
                     </td>
-                    <td className="px-3 py-2 whitespace-nowrap text-center text-sm space-x-1 sm:space-x-2">
-                      <Button
-                        size="icon"
-                        variant={
-                          student.isPresent === true ? "default" : "outline"
-                        }
-                        onClick={() => handleMarkAttendance(student.id, true)}
-                        className={`rounded-full w-8 h-8 p-0 transition-all ${
-                          student.isPresent === true
-                            ? "bg-green-500 hover:bg-green-600 text-white opacity-100"
-                            : "border-green-400 text-green-500 hover:bg-green-50 hover:border-green-500 opacity-70 hover:opacity-100"
-                        }`}
-                        disabled={student.isPresent === true}
-                        title="Mark Present"
-                      >
-                        <Check size={16} />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant={
-                          student.isPresent === false
-                            ? "destructive"
-                            : "outline"
-                        }
-                        onClick={() => handleMarkAttendance(student.id, false)}
-                        className={`rounded-full w-8 h-8 p-0 transition-all ${
-                          student.isPresent === false
-                            ? "bg-red-500 hover:bg-red-600 text-white opacity-100"
-                            : "border-red-400 text-red-500 hover:bg-red-50 hover:border-red-500 opacity-70 hover:opacity-100"
-                        }`}
-                        disabled={student.isPresent === false}
-                        title="Mark Absent"
-                      >
-                        <IconX size={16} />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => openNotesDialog(student)}
-                        className="text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full w-8 h-8 p-0 transition-colors"
-                        title="Add/Edit Note"
-                      >
-                        <Edit2 size={16} />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => handleViewHistory(student)}
-                        className="text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-full w-8 h-8 p-0 transition-colors"
-                        title="View History"
-                      >
-                        <Info size={16} />
-                      </Button>
+                    <td className="px-3 py-2 whitespace-nowrap text-center text-sm">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-gray-500 hover:bg-gray-100"
+                          >
+                            <MoreVertical size={16} />
+                            <span className="sr-only">More actions</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onSelect={() =>
+                              handleMarkAttendance(student.id, true)
+                            }
+                            disabled={student.isPresent === true}
+                            className="cursor-pointer flex items-center gap-2 text-green-700"
+                          >
+                            <Check size={16} /> Mark Present
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() =>
+                              handleMarkAttendance(student.id, false)
+                            }
+                            disabled={student.isPresent === false}
+                            className="cursor-pointer flex items-center gap-2 text-red-700"
+                          >
+                            <IconX size={16} /> Mark Absent
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() => openNotesDialog(student)}
+                            className="cursor-pointer flex items-center gap-2 text-blue-700"
+                          >
+                            <Edit2 size={16} /> Add/Edit Note
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() => handleViewHistory(student)}
+                            className="cursor-pointer flex items-center gap-2 text-purple-700"
+                          >
+                            <Info size={16} /> View History
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+      </div>
+
+      {/* HIỂN THỊ DẠNG CARD (CHỈ CHO MÀN HÌNH NHỎ HƠN 'sm') */}
+      <div className="flex-grow p-4 sm:hidden">
+        {loading && allStudents.length > 0 && (
+          <p className="text-center text-gray-600 py-8">
+            Loading attendance for {selectedGrade}...
+          </p>
+        )}
+        {!loading &&
+          studentsToDisplay.length === 0 &&
+          selectedGrade &&
+          !pageError && (
+            <p className="text-center text-gray-600 mt-8 text-lg">
+              No students in grade {selectedGrade}.
+            </p>
+          )}
+        {!loading && studentsToDisplay.length > 0 && (
+          <div className="space-y-4">
+            {" "}
+            {/* Tạo khoảng cách giữa các card */}
+            {studentsToDisplay.map((student) => (
+              <div
+                key={student.id}
+                className="bg-white rounded-lg shadow-md p-4 flex flex-col gap-3"
+              >
+                <div className="flex items-center gap-4">
+                  <img
+                    src={
+                      student.avatar ||
+                      `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                        student.name
+                      )}&background=random&color=fff&size=128`
+                    }
+                    alt={student.name}
+                    className="h-12 w-12 rounded-full object-cover flex-shrink-0"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-lg text-gray-900 truncate">
+                      {student.name}
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      ID: {student.rollNumber}
+                    </p>
+                  </div>
+                  <div className="flex-shrink-0">
+                    {student.isPresent === true ? (
+                      <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                        Present
+                      </span>
+                    ) : (
+                      <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                        Absent
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex justify-around items-center pt-2 border-t border-gray-100">
+                  <Button
+                    size="sm"
+                    variant={student.isPresent === true ? "default" : "outline"}
+                    onClick={() => handleMarkAttendance(student.id, true)}
+                    className={`rounded-full px-3 py-1 flex items-center gap-1 transition-all text-sm ${
+                      student.isPresent === true
+                        ? "bg-green-500 hover:bg-green-600 text-white"
+                        : "border-green-400 text-green-500 hover:bg-green-50 hover:border-green-500"
+                    }`}
+                    disabled={student.isPresent === true}
+                  >
+                    <Check size={16} /> Present
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={
+                      student.isPresent === false ? "destructive" : "outline"
+                    }
+                    onClick={() => handleMarkAttendance(student.id, false)}
+                    className={`rounded-full px-3 py-1 flex items-center gap-1 transition-all text-sm ${
+                      student.isPresent === false
+                        ? "bg-red-500 hover:bg-red-600 text-white"
+                        : "border-red-400 text-red-500 hover:bg-red-50 hover:border-red-500"
+                    }`}
+                    disabled={student.isPresent === false}
+                  >
+                    <IconX size={16} /> Absent
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-gray-500 hover:bg-gray-100"
+                      >
+                        <MoreVertical size={16} />{" "}
+                        <span className="hidden sm:inline">More</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onSelect={() => openNotesDialog(student)}
+                        className="cursor-pointer flex items-center gap-2 text-blue-700"
+                      >
+                        <Edit2 size={16} /> Edit Note
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onSelect={() => handleViewHistory(student)}
+                        className="cursor-pointer flex items-center gap-2 text-purple-700"
+                      >
+                        <Info size={16} /> View History
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
@@ -654,15 +714,16 @@ const CheckInPage: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      <StudentAttendanceHistoryDialog
-        open={isHistoryDialogOpen}
+      <StudentAttendanceHistory
+        open={isHistoryDrawerOpen}
         onClose={() => {
-          setIsHistoryDialogOpen(false);
+          setIsHistoryDrawerOpen(false);
           setSelectedStudentForHistory(null);
           setStudentHistoryData([]);
         }}
         student={selectedStudentForHistory}
-        attendanceHistory={studentHistoryData}
+        month={currentDate}
+        attendanceHistory={transformedAttendanceHistory}
         isLoading={loadingHistory}
       />
 

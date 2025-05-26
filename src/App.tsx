@@ -37,15 +37,26 @@ const App = () => (
           <Route path="/food" element={<FoodPage />} />
           <Route path="/check" element={<CheckInPage />} />
           <Route path="/announcements" element={<AnnouncementsPage />} />
-          <Route path="/announcements/new" element={<AddAnnouncementPage />} />
-          {/* <Route
-            path="/announcements/:id"
-            element={<AnnouncementsDetailPage />}
-          /> */}
+          {/* Dùng chung một route cho cả thêm mới và chỉnh sửa */}
           <Route
             path="/announcements/:id/edit"
             element={<AnnouncementsDetailPage />}
           />
+          <Route
+            path="/announcements/new"
+            element={<AnnouncementsDetailPage />}
+          />{" "}
+          {/* Thêm route này để khớp với id='new' */}
+          {/* Thêm route này để khớp với id='new' */}
+          {/* <Route path="/announcements/new" element={<AddAnnouncementPage />} /> */}
+          {/* <Route
+            path="/announcements/:id"
+            element={<AnnouncementsDetailPage />}
+          /> */}
+          {/* <Route
+            path="/announcements/:id/edit"
+            element={<AnnouncementsDetailPage />}
+          /> */}
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/chat" element={<ChatOverviewPage />} />
           <Route path="/chat/new" element={<SelectChatRecipientPage />} />

@@ -2,10 +2,10 @@ export interface Announcement {
   id: number;
   title: string;
   message: string;
-  category: "Reminder" | "Update" | "Transaction";
-  date: string; // ISO format: YYYY-MM-DD
-  time: string; // Format: HH:mm
-  recipients: string[]; // e.g., ["Students", "Parents"]
+  category: string; // e.g., "Reminder", "Update", "Transaction"
+  date: string; // YYYY-MM-DD
+  time: string; // HH:MM
+  recipients: string[]; // Thêm trường này vào model
 }
 
 export const initialAnnouncements: Announcement[] = [
