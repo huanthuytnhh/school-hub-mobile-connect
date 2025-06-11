@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/dialog";
 
 import StudentAttendanceHistory from "@/components/attendance/StudentAttendanceHistory";
+import { toast } from "@/components/ui/use-toast";
 
 // Helper function to format date to YYYY-MM-DD string using local date components
 const getFormattedDateForAPI = (date: Date): string => {
@@ -137,101 +138,105 @@ const CheckInPage: React.FC = () => {
   useEffect(() => {
     fetchInitialData();
   }, [fetchInitialData]);
-
-  useEffect(() => {
-    const processStudentAndAttendanceData = async () => {
-      // If selectedGrade is forced by URL and it's not among available grades, there's an issue.
-      // Or if no selectedGrade at all and no students.
-      if (!selectedGrade || allStudents.length === 0) {
-        setStudentsToDisplay([]);
-        if (
-          allStudents.length > 0 &&
-          !selectedGrade && // This case is for initial load when selectedGrade hasn't been set yet (no URL param)
-          availableGrades.length > 0
-        ) {
-          setSelectedGrade(availableGrades[0]);
-        } else if (
-          selectedGradeFromURL &&
-          !availableGrades.includes(selectedGradeFromURL) &&
-          !loading
-        ) {
-          setPageError(`Grade "${selectedGradeFromURL}" not found.`);
-        }
-        setLoading(false);
-        return;
+  const processStudentAndAttendanceData = useCallback(async () => {
+    if (!selectedGrade || allStudents.length === 0) {
+      setStudentsToDisplay([]);
+      if (
+        allStudents.length > 0 &&
+        !selectedGrade &&
+        availableGrades.length > 0
+      ) {
+        setSelectedGrade(availableGrades[0]);
+      } else if (
+        selectedGradeFromURL &&
+        !availableGrades.includes(selectedGradeFromURL) &&
+        !loading
+      ) {
+        setPageError(`Grade "${selectedGradeFromURL}" not found.`);
       }
+      setLoading(false);
+      return;
+    }
 
-      setLoading(true);
-      setPageError(null);
+    setLoading(true);
+    setPageError(null);
 
-      const studentsInSelectedGrade = allStudents.filter(
-        (student) => student.grade === selectedGrade
+    const studentsInSelectedGrade = allStudents.filter(
+      (student) => student.grade === selectedGrade
+    );
+
+    let studentsWithInitialAttendance: StudentWithAttendance[] =
+      studentsInSelectedGrade.map((s) => ({
+        ...s,
+        isPresent: false, // Default to false (Absent)
+        notes: "",
+      }));
+
+    try {
+      const formattedDate = getFormattedDateForAPI(currentDate);
+      console.log(
+        `Fetching attendance for classId: ${selectedGrade}, date: ${formattedDate}`
+      );
+      const attendanceRecords = await getAttendanceByClassAndDate(
+        selectedGrade,
+        formattedDate
+      );
+      console.log(
+        `API Response - getAttendanceByClassAndDate (Class: ${selectedGrade}, Date: ${formattedDate}):`,
+        attendanceRecords
       );
 
-      let studentsWithInitialAttendance: StudentWithAttendance[] =
-        studentsInSelectedGrade.map((s) => ({
-          ...s,
-          isPresent: false, // Default to false (Absent)
-          notes: "",
-        }));
-
-      try {
-        const formattedDate = getFormattedDateForAPI(currentDate);
-        console.log(
-          `Fetching attendance for classId: ${selectedGrade}, date: ${formattedDate}`
-        );
-        const attendanceRecords = await getAttendanceByClassAndDate(
-          selectedGrade,
-          formattedDate
-        );
-        console.log(
-          `API Response - getAttendanceByClassAndDate (Class: ${selectedGrade}, Date: ${formattedDate}):`,
-          attendanceRecords
-        );
-
-        studentsWithInitialAttendance = studentsWithInitialAttendance.map(
-          (student) => {
-            const record = attendanceRecords.find(
-              (r) => r.studentId === student.id
-            );
-            return {
-              ...student,
-              isPresent: record ? record.isPresent : false, // Use record.isPresent, default to false
-              notes: record ? record.notes || "" : "",
-            };
-          }
-        );
-      } catch (err) {
-        console.warn(
-          `Failed to fetch attendance for ${selectedGrade} on ${currentDate.toLocaleDateString()}:`,
-          err
-        );
-        setPageError(
-          "Could not load attendance data for this class and date. Please try again."
-        );
-      } finally {
-        setStudentsToDisplay(studentsWithInitialAttendance);
-        setLoading(false);
-      }
-    };
-
-    // Only run if allStudents is populated or if loading finished with an error indicating no students.
-    // Avoid running if allStudents is empty but fetchInitialData is still running.
-    if (
-      allStudents.length > 0 ||
-      (!loading && pageError && allStudents.length === 0)
-    ) {
-      processStudentAndAttendanceData();
+      studentsWithInitialAttendance = studentsWithInitialAttendance.map(
+        (student) => {
+          const record = attendanceRecords.find(
+            (r) => r.studentId === student.id
+          );
+          return {
+            ...student,
+            isPresent: record ? record.is_present : false,
+            notes: record ? record.notes || "" : "",
+          };
+        }
+      );
+    } catch (err) {
+      console.warn(
+        `Failed to fetch attendance for ${selectedGrade} on ${currentDate.toLocaleDateString()}:`,
+        err
+      );
+      setPageError(
+        "Could not load attendance data for this class and date. Please try again."
+      );
+    } finally {
+      setStudentsToDisplay(studentsWithInitialAttendance);
+      setLoading(false);
     }
   }, [
     selectedGrade,
     currentDate,
     allStudents,
     availableGrades,
-    loading,
-    pageError,
-    selectedGradeFromURL, // Thêm vào dependencies
+    selectedGradeFromURL,
   ]);
+
+  useEffect(() => {
+    if (
+      allStudents.length > 0 ||
+      (!loading && pageError && allStudents.length === 0)
+    ) {
+      processStudentAndAttendanceData();
+    }
+  }, [processStudentAndAttendanceData, allStudents, loading, pageError]);
+
+  // Thêm polling để cập nhật dữ liệu mỗi 30 giây
+  // useEffect(() => {
+  //   if (selectedGrade) {
+  //     const interval = setInterval(() => {
+  //       processStudentAndAttendanceData();
+  //     }, 30000);
+
+  //     return () => clearInterval(interval);
+  //   }
+  // }, [selectedGrade]);
 
   const handleMarkAttendance = async (
     studentId: number,
@@ -256,9 +261,7 @@ const CheckInPage: React.FC = () => {
       notes: notesToSave !== undefined ? notesToSave : studentBeingMarked.notes,
     };
 
-    const previousState = [...studentsToDisplay];
-
-    // Optimistic UI update: Update immediately for responsiveness
+    // Optimistic UI update
     setStudentsToDisplay((prevStudents) =>
       prevStudents.map((student) =>
         student.id === studentId
@@ -269,13 +272,8 @@ const CheckInPage: React.FC = () => {
 
     try {
       const updatedRecord = await markStudentAttendance(payload);
-      console.log(
-        `API Response - markStudentAttendance (Payload: ${JSON.stringify(
-          payload
-        )}):`,
-        updatedRecord
-      );
-      // Ensure UI is updated with the actual response from the backend
+
+      // Update state with server data
       setStudentsToDisplay((prevStudents) =>
         prevStudents.map((student) =>
           student.id === studentId
@@ -287,14 +285,24 @@ const CheckInPage: React.FC = () => {
             : student
         )
       );
+
+      // Refresh all data
+      await processStudentAndAttendanceData();
     } catch (err) {
       console.error("Failed to mark attendance:", err);
-      alert(
-        err instanceof Error
-          ? err.message
-          : "Failed to mark attendance. Please try again."
+      toast({
+        title: "Error",
+        description: "Failed to mark attendance. Please try again.",
+        variant: "destructive",
+      });
+      // Rollback UI state
+      setStudentsToDisplay((prevStudents) =>
+        prevStudents.map((student) =>
+          student.id === studentId
+            ? { ...student, isPresent: !isPresentStatus }
+            : student
+        )
       );
-      setStudentsToDisplay(previousState); // Rollback on error
     }
   };
 
@@ -353,7 +361,7 @@ const CheckInPage: React.FC = () => {
   const transformedAttendanceHistory = useMemo(() => {
     return studentHistoryData.map((record) => ({
       date: new Date(record.date + "T00:00:00"),
-      isPresent: record.isPresent,
+      isPresent: record.is_present,
     }));
   }, [studentHistoryData]);
 

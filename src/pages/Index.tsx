@@ -33,13 +33,21 @@ const Index = () => {
         setLoadingRole(true);
         try {
           const email = user.emailAddresses[0].emailAddress;
-          const response = await getUserRole(email); // API returns role and user details
-          console.log("Role response:", response);
+          const response = await getUserRole(email);
           const { role: userRole, user: userDetails } = response;
           setRole(userRole);
-          console.log("role", userRole);
+
+          // Chuyển hướng nếu là student
+          if (userRole === "student" && userDetails) {
+            navigate("/student-home", {
+              state: {
+                studentId: userDetails.id,
+              },
+            });
+            return;
+          }
+
           if (userRole === "teacher" && userDetails?.classInCharge) {
-            // Store classInCharge for teacher
             setTeacherClass(userDetails.classInCharge);
           }
         } catch (e) {
@@ -51,7 +59,7 @@ const Index = () => {
       }
     };
     fetchRole();
-  }, [isSignedIn, user]);
+  }, [isSignedIn, user, navigate]);
 
   const features = [
     { title: "Food", icon: Utensils, color: "#4285F4", link: "/food" },
