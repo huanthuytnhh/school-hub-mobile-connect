@@ -1,6 +1,15 @@
 // src/api/announcementsApi.ts
-import axiosInstance from "@/api/axiosInstance";
+import axiosInstance from "./axiosInstance";
 import { Announcement } from "@/models/announcement"; // Import model Announcement
+
+export interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  date: string;
+  author: string;
+  priority: "high" | "medium" | "low";
+}
 
 /**
  * Lấy tất cả các thông báo.
@@ -8,7 +17,7 @@ import { Announcement } from "@/models/announcement"; // Import model Announceme
  */
 export const getAnnouncements = async (): Promise<Announcement[]> => {
   const response = await axiosInstance.get("/announcements/");
-  return response.data as Announcement[];
+  return response.data;
 };
 
 /**
@@ -17,10 +26,10 @@ export const getAnnouncements = async (): Promise<Announcement[]> => {
  * @returns Promise<Announcement> Thông báo tìm được.
  */
 export const getAnnouncementById = async (
-  id: number
+  id: string
 ): Promise<Announcement> => {
   const response = await axiosInstance.get(`/announcements/${id}/`);
-  return response.data as Announcement;
+  return response.data;
 };
 
 /**

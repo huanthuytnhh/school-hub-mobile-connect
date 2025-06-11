@@ -48,9 +48,6 @@ const FoodPage: React.FC = () => {
       setError(null);
       const data = await getMenus();
       setMenus(data);
-      // Cập nhật weekDates nếu cần (ví dụ: muốn hiển thị tuần của menu mới nhất)
-      // Hiện tại, getWeekDates() sẽ luôn bắt đầu từ thứ 2 của tuần hiện tại
-      // setWeekDates(getWeekDates(new Date(data[0]?.date || new Date())));
     } catch (err) {
       console.error("Failed to fetch menus:", err);
       if (err instanceof Error) {
@@ -61,19 +58,19 @@ const FoodPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, []); // Empty dependency array since it doesn't depend on any props or state
 
   // Fetch menus on component mount
   useEffect(() => {
     fetchMenus();
-  }, [fetchMenus]);
+  }, []); // Empty dependency array since we only want to fetch on mount
 
   // Find the current menu for the selected date
   const currentMenu = menus.find((menu) => menu.date === selectedDate) || {
-    id: 0, // ID 0 là tạm thời, sẽ được backend cấp khi tạo mới
+    id: 0,
     date: selectedDate,
     imageUrl:
-      "https://images.unsplash.com/photo-1547592180-85f173990554?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80", // Ảnh mặc định
+      "https://images.unsplash.com/photo-1547592180-85f173990554?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
     items: [],
   };
 
@@ -86,7 +83,7 @@ const FoodPage: React.FC = () => {
       setNewItemName("");
       setNewItemAmount("");
     }
-  }, [isEditing, currentMenu]);
+  }, [isEditing]); // Only depend on isEditing to avoid infinite loop
 
   // Get month and year for the header
   const getMonthYear = (): string => {

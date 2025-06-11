@@ -7,7 +7,7 @@ import axiosInstance from "@/api/axiosInstance";
  * - `studentId`: ID của học sinh.
  * - `classId`: (Tùy chọn khi nhận) ID của lớp (giá trị từ student.grade), nếu backend trả về.
  * - `date`: Ngày điểm danh (YYYY-MM-DD).
- * - `isPresent`: Trạng thái điểm danh (true: có mặt, false: vắng mặt).
+ * - `is_present`: Trạng thái điểm danh (true: có mặt, false: vắng mặt).
  * - `notes`: (Tùy chọn) Ghi chú.
  */
 export interface AttendanceRecord {
@@ -15,7 +15,7 @@ export interface AttendanceRecord {
   studentId: number;
   classId?: string; // Giá trị của student.grade, backend có thể trả về nếu cần
   date: string; // YYYY-MM-DD
-  isPresent: boolean;
+  is_present: boolean;
   notes?: string;
 }
 

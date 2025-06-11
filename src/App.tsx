@@ -20,6 +20,10 @@ import NotFound from "./pages/NotFound";
 import ChatOverviewPage from "./pages/ChatOverviewPage";
 import SelectChatRecipientPage from "./pages/SelectChatRecipientPage";
 import ChatDetailPage from "./pages/ChatDetailPage";
+import StudentHome from "@/pages/StudentHome";
+import StudentAttendance from "@/pages/student/Attendance";
+import StudentMenu from "@/pages/student/Menu";
+import StudentAnnouncements from "@/pages/student/Announcements";
 
 const queryClient = new QueryClient();
 
@@ -84,6 +88,13 @@ const App = () => (
           <Route path="/chat/new" element={<SelectChatRecipientPage />} />
           <Route path="/chat/new/:userId" element={<ChatDetailPage />} />
           <Route path="/chat/:id" element={<ChatDetailPage />} />
+          <Route path="/student-home" element={<StudentHome />} />
+          <Route path="/student/attendance" element={<StudentAttendance />} />
+          <Route path="/student/menu" element={<StudentMenu />} />
+          <Route
+            path="/student/announcements"
+            element={<StudentAnnouncements />}
+          />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
